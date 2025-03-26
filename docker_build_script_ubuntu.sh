@@ -49,7 +49,16 @@ apt-get update && apt-get install -y \
     jq \
     xmlstarlet \
     dos2unix \
+    libtinfo5 \
     ssh
+
+# Install Node 16
+nvm install 16
+nvm use 16
+rm -rf node_modules
+npm install
+npm uninstall puppeteer
+npm install puppeteer
 
 # Run upgrades
 apt-get upgrade -y
