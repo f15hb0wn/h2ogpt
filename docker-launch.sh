@@ -1,7 +1,11 @@
 ## Edit Variables
+# HF API Token to prevent download limit
 export HUGGING_FACE_HUB_TOKEN="Your HF API Token"
-export MODEL="unsloth/Llama-3.2-3B-Instruct"
-export PROMPTTYPE="llama"
+# SerpAPI Key for searching web sources
+export SERPAPI_API_KEY="Your SerpAPI Key"
+# Model to use
+export MODEL="unsloth/Llama-3.3-70B-Instruct-bnb-4bit"
+# UI and API ports
 export GRADIO_SERVER_PORT=7860
 export OPENAI_SERVER_PORT=5000
 # Create directories
@@ -26,6 +30,9 @@ docker run \
        -p $OPENAI_SERVER_PORT:$OPENAI_SERVER_PORT \
        --rm --init \
        --network host \
+       -e USER_AGENT='Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:69.0) Gecko/20100101' \
+       -e SERPAPI_API_KEY=$SERPAPI_API_KEY \
+       --name h2ogpt \
        -v /etc/passwd:/etc/passwd:ro \
        -v /etc/group:/etc/group:ro \
        -u `id -u`:`id -g` \
@@ -43,7 +50,6 @@ docker run \
        ghcr.io/f15hb0wn/h2ogpt:latest /workspace/generate.py \
           --base_model=$MODEL \
           --use_safetensors=True \
-          --prompt_type=$PROMPTTYPE \
           --save_dir='/workspace/save/' \
           --auth_filename='/workspace/h2ogpt_auth/auth.db' \
           --h2ogpt_api_keys='/workspace/h2ogpt_auth/h2ogpt_api_keys.json' \
@@ -55,5 +61,7 @@ docker run \
           --score_model=None \
           --max_max_new_tokens=2048 \
           --max_new_tokens=1024 \
+            --load_4bit=True \
+          --verbose \
           --use_auth_token="${HUGGING_FACE_HUB_TOKEN}" \
           --openai_port=$OPENAI_SERVER_PORT
