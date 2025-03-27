@@ -20,5 +20,6 @@ if ! wget -O chromedriver-linux64.zip "https://storage.googleapis.com/chrome-for
 fi
 
 unzip -o chromedriver-linux64.zip
+mv chromedriver-linux64/chromedriver /usr/bin/chromedriver
 chown root:root /usr/bin/chromedriver
 chmod +x /usr/bin/chromedriver

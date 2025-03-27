@@ -69,28 +69,34 @@ git-lfs
 
 RUN apt-get upgrade -y
 
-# Get Natural Language Toolkit Data
-RUN bash ./git-nltk.sh
-
 WORKDIR /workspace
 
 COPY . /workspace/
 
 RUN touch /workspace/build_info.txt
 
+# Get Natural Language Toolkit Data
+RUN bash git-nltk.sh
+
 ### Begin of the build script
 # Upgrade Chrome
 RUN bash chrome-install.sh
 # Conda Install
-RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
+RUN wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
+    echo "Downloaded Miniconda installer" && \
+    chmod +x Miniconda3-latest-Linux-x86_64.sh && \
     mkdir -p /h2ogpt_conda && \
-    bash ./Miniconda3-latest-Linux-x86_64.sh -b -u -p /h2ogpt_conda && \
-    conda update -n base conda && \
-    source /h2ogpt_conda/etc/profile.d/conda.sh && \
-    conda run -n h2ogpt -y && \
-    conda activate h2ogpt && \
-    conda install python=3.10 pygobject weasyprint -c conda-forge -y && \
-    echo "h2oGPT conda env: $CONDA_DEFAULT_ENV"
+    ./Miniconda3-latest-Linux-x86_64.sh -b -u -p /h2ogpt_conda && \
+    echo "Installed Miniconda to /h2ogpt_conda" && \
+    rm Miniconda3-latest-Linux-x86_64.sh && \
+    ls -la /h2ogpt_conda/bin && \
+    /h2ogpt_conda/bin/conda config --set always_yes yes && \
+    /h2ogpt_conda/bin/conda update -n base -c defaults conda && \
+    /h2ogpt_conda/bin/conda init bash && \
+    /h2ogpt_conda/bin/conda create -n h2ogpt python=3.10 -y && \
+    /h2ogpt_conda/bin/conda install -n h2ogpt -c conda-forge pygobject weasyprint -y && \
+    echo "Conda environment setup complete"
+
 
 # Linux install script
 RUN pip uninstall -y pandoc pypandoc pypandoc-binary flash-attn
@@ -185,6 +191,10 @@ RUN pip install tenacity==8.3.0 -c reqs_optional/reqs_constraints.txt
 # work-around for some package downgrading jinja2 but >3.1.0 needed for transformers
 RUN pip install jinja2==3.1.4 -c reqs_optional/reqs_constraints.txt
 
+# Install Unsloth
+RUN pip install unsloth -c reqs_optional/reqs_constraints.txt
+
+# Run patches
 RUN bash ./docs/run_patches.sh
 
 # Install latest Node.js and npm
