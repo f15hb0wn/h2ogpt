@@ -17,7 +17,7 @@ ENV CMAKE_ARGS="-DGGML_CUDA=on -DCMAKE_CUDA_ARCHITECTURES=all"
 ENV FORCE_CMAKE=1
 ENV GPLOK=1
 ENV NLTK_DATA=/usr/local/share/nltk_data
-ENV MAX_GCC_VERSION=11
+
 
 # Install APT Dependencies
 RUN apt-get update && apt-get install -y \
@@ -65,7 +65,12 @@ rubberband-cli \
 ffmpeg \
 unzip xvfb libxi6 libgconf-2-4 libu2f-udev \
 default-jdk \
-git-lfs 
+git-lfs \
+libgomp1 \
+libomp-dev \
+libc6-dev \
+ccache
+
 
 RUN apt-get upgrade -y
 
@@ -111,7 +116,7 @@ RUN pip install -r requirements.txt -c reqs_optional/reqs_constraints.txt
 RUN pip install -r reqs_optional/requirements_optional_langchain.txt -c reqs_optional/reqs_constraints.txt
 
 # LLaMa/GPT4All
-RUN pip install -r reqs_optional/requirements_optional_llamacpp_gpt4all.txt -c reqs_optional/reqs_constraints.txt --no-cache-dir
+# RUN pip install -r reqs_optional/requirements_optional_llamacpp_gpt4all.txt -c reqs_optional/reqs_constraints.txt --no-cache-dir
 
 # Optional: PyMuPDF/ArXiv:
 RUN pip install -r reqs_optional/requirements_optional_langchain.gpllike.txt -c reqs_optional/reqs_constraints.txt
@@ -210,21 +215,12 @@ RUN npm install -g puppeteer-core
 # https://github.com/voxel51/fiftyone/issues/3975
 RUN wget https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-ubuntu2204-7.0.4.tgz
 RUN tar xvzf mongodb-linux-x86_64-ubuntu2204-7.0.4.tgz
-RUN sudo mkdir -p /usr/lib/python3.10/site-packages/fiftyone/db/
-RUN sudo cp -r mongodb-linux-x86_64-ubuntu2204-7.0.4/bin /usr/lib/python3.10/site-packages/fiftyone/db/
-RUN sudo chmod -R a+rwx /usr/lib/python3.10/site-packages/fiftyone/db
+RUN mkdir -p /usr/lib/python3.10/site-packages/fiftyone/db/
+RUN cp -r mongodb-linux-x86_64-ubuntu2204-7.0.4/bin /usr/lib/python3.10/site-packages/fiftyone/db/
+RUN chmod -R a+rwx /usr/lib/python3.10/site-packages/fiftyone/db
 
 # Remainder of Build
 RUN python3.10 tiktoken_cache.py
-# Open Web UI
-RUN conda create -n open-webui -y
-RUN source /h2ogpt_conda/etc/profile.d/conda.sh
-RUN conda activate open-webui
-RUN conda install python=3.11 -y
-RUN echo "open-webui conda env: $CONDA_DEFAULT_ENV"
-
-RUN chmod -R a+rwx /h2ogpt_conda
-RUN pip install https://h2o-release.s3.amazonaws.com/h2ogpt/open_webui-0.3.8-py3-none-any.whl
 
 # Track build info
 RUN cp /workspace/build_info.txt /build_info.txt
