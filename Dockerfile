@@ -19,10 +19,6 @@ ENV GPLOK=1
 ENV NLTK_DATA=/usr/local/share/nltk_data
 ENV MAX_GCC_VERSION=11
 
-# Copy NLTK data
-RUN mkdir -p /usr/local/share/nltk_data
-COPY ../nltk_data /usr/local/share/nltk_data
-
 # Install APT Dependencies
 RUN apt-get update && apt-get install -y \
 git \
@@ -39,8 +35,6 @@ libreoffice \
 autoconf \
 libtool \
 docker.io \
-nodejs \
-npm \
 zip \
 unzip \
 htop \
@@ -70,15 +64,19 @@ libmagic-dev poppler-utils tesseract-ocr libtesseract-dev libreoffice \
 rubberband-cli \
 ffmpeg \
 unzip xvfb libxi6 libgconf-2-4 libu2f-udev \
-default-jdk
+default-jdk \
+git-lfs 
 
 RUN apt-get upgrade -y
+
+# Get Natural Language Toolkit Data
+RUN bash ./git-nltk.sh
 
 WORKDIR /workspace
 
 COPY . /workspace/
 
-COPY build_info.txt /workspace/
+RUN touch /workspace/build_info.txt
 
 ### Begin of the build script
 # Upgrade Chrome
@@ -189,10 +187,14 @@ RUN pip install jinja2==3.1.4 -c reqs_optional/reqs_constraints.txt
 
 RUN bash ./docs/run_patches.sh
 
-# NPM based
-RUN npm install -g @mermaid-js/mermaid-cli
+# Install latest Node.js and npm
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs && \
+    npm install -n -g npm@latest
+
+# NPM based - with version specification
+RUN npm install -g @mermaid-js/mermaid-cli@10.6.1
 RUN npm install -g puppeteer-core
-# npx -y puppeteer browsers install chrome-headless-shell
 
 # fifty one doesn't install db right for wolfi, so improve
 # https://github.com/voxel51/fiftyone/issues/3975
@@ -231,6 +233,7 @@ RUN rm -rf /workspace/docs
 RUN rm -rf /workspace/helm
 RUN rm -rf /workspace/notebooks
 RUN rm -rf /workspace/papers
+RUN rm -rf /tmp/*
 ### End of the build script
 RUN chmod -R a+rwx /workspace
 
